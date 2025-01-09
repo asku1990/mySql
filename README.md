@@ -91,10 +91,32 @@ A simple Node.js tool for managing MySQL database migrations.
   npm run seed
   ```
 
-- **To remove seeded data:**
+- **To run a specific seed file:**
+
+  ```bash
+  npm run seed <filename>
+  ```
+
+  Example:
+  ```bash
+  npm run seed 001_add_sample_users.js
+  ```
+
+- **To remove all seeded data:**
 
   ```bash
   npm run seed:down
+  ```
+
+- **To remove specific seeded data:**
+
+  ```bash
+  npm run seed:down <filename>
+  ```
+
+  Example:
+  ```bash
+  npm run seed:down 001_add_sample_users.js
   ```
 
 
