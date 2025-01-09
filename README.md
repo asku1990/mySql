@@ -67,3 +67,35 @@ A simple Node.js tool for managing MySQL database migrations.
   npm run migrate:down
   ```
 
+### Seed Data Management
+
+1. Add a new seed file in `seeds/scripts` (e.g., `001_add_sample_users.js`).
+2. Use this template:
+
+   ```javascript
+   module.exports = {
+       up: async (queryInterface) => {
+           // Seed data insertion
+       },
+       down: async (queryInterface) => {
+           // Remove seed data
+       }
+   };
+   ```
+
+### Run Seeds
+
+- **To run all seeds:**
+
+  ```bash
+  npm run seed
+  ```
+
+- **To remove seeded data:**
+
+  ```bash
+  npm run seed:down
+  ```
+
+
+
