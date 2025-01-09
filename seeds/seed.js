@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const config = require('../migrations/config');
 
-async function seed(direction = 'up') {
+async function seed(direction = 'up', specificSeed = null) {
   let connection;
 
   try {
@@ -25,6 +25,14 @@ async function seed(direction = 'up') {
     // Get all seed files
     let seedFiles = await fs.readdir(path.join(__dirname, 'scripts'));
     seedFiles.sort();
+
+    // Filter for specific seed if provided
+    if (specificSeed) {
+      seedFiles = seedFiles.filter(file => file === specificSeed);
+      if (seedFiles.length === 0) {
+        throw new Error(`Seed file '${specificSeed}' not found`);
+      }
+    }
 
     if (direction === 'down') {
       seedFiles.reverse();
@@ -61,4 +69,5 @@ async function seed(direction = 'up') {
 }
 
 const direction = process.argv[2] === 'down' ? 'down' : 'up';
-seed(direction); 
+const specificSeed = process.argv[3]; // Get the specific seed file name
+seed(direction, specificSeed); 
