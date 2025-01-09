@@ -44,10 +44,10 @@ A simple Node.js tool for managing MySQL database migrations.
 
    ```javascript
    module.exports = {
-       up: async (connection) => {
+       up: async (queryInterface) => {
            // Migration code
        },
-       down: async (connection) => {
+       down: async (queryInterface) => {
            // Rollback code
        }
    };
@@ -64,7 +64,6 @@ A simple Node.js tool for managing MySQL database migrations.
 - **To rollback the last migration:**
 
   ```bash
-  npm run migrate:rollback
+  npm run migrate:down
   ```
 
-## Project Structure

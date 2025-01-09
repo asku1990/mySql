@@ -5,27 +5,37 @@ const config = require('./config');
 require('dotenv').config();
 
 async function migrate(direction = 'up') {
-  // First connect without database to ensure it exists
-  const initialConnection = await mysql.createConnection({
-    host: config.development.host,
-    user: config.development.user,
-    password: config.development.password,
-    port: config.development.port
-  });
+  let initialConnection;
+  let connection;
 
   try {
-    // Create database if it doesn't exist
+    // First connect without database to ensure it exists
+    initialConnection = await mysql.createConnection({
+      host: config.development.host,
+      user: config.development.user,
+      password: config.development.password,
+      port: config.development.port
+    });
+
     await initialConnection.execute(
       `CREATE DATABASE IF NOT EXISTS ${config.development.database}`
     );
+  } catch (error) {
+    console.error('Failed to create database:', error);
+    process.exit(1);
   } finally {
-    await initialConnection.end();
+    if (initialConnection) await initialConnection.end();
   }
 
-  // Then connect with the database selected
-  const connection = await mysql.createConnection(config.development);
-
   try {
+    // Then connect with the database selected
+    connection = await mysql.createConnection(config.development);
+    
+    // Create a queryInterface wrapper for the connection
+    const queryInterface = {
+      query: (...args) => connection.execute(...args)
+    };
+
     // Create migrations table if it doesn't exist
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS migrations (
@@ -51,22 +61,28 @@ async function migrate(direction = 'up') {
     for (const file of migrationFiles) {
       const migration = require(path.join(__dirname, 'scripts', file));
       
-      if (direction === 'up' && !executedMigrationNames.includes(file)) {
-        // Run migration
-        await connection.execute(migration.up);
-        await connection.execute('INSERT INTO migrations (name) VALUES (?)', [file]);
-        console.log(`Migrated up: ${file}`);
-      } else if (direction === 'down' && executedMigrationNames.includes(file)) {
-        // Rollback migration
-        await connection.execute(migration.down);
-        await connection.execute('DELETE FROM migrations WHERE name = ?', [file]);
-        console.log(`Migrated down: ${file}`);
+      try {
+        if (direction === 'up' && !executedMigrationNames.includes(file)) {
+          // Run migration
+          await migration.up(queryInterface);
+          await connection.execute('INSERT INTO migrations (name) VALUES (?)', [file]);
+          console.log(`Migrated up: ${file}`);
+        } else if (direction === 'down' && executedMigrationNames.includes(file)) {
+          // Rollback migration
+          await migration.down(queryInterface);
+          await connection.execute('DELETE FROM migrations WHERE name = ?', [file]);
+          console.log(`Migrated down: ${file}`);
+        }
+      } catch (error) {
+        console.error(`Failed to migrate ${file}:`, error);
+        throw error; // Re-throw to stop migration process
       }
     }
   } catch (error) {
     console.error('Migration failed:', error);
+    process.exit(1);
   } finally {
-    await connection.end();
+    if (connection) await connection.end();
   }
 }
 
