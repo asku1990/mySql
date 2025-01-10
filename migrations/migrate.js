@@ -4,7 +4,26 @@ const path = require('path');
 const config = require('./config');
 require('dotenv').config();
 
+function showHelp() {
+  console.log(`
+MySQL Migration Tool - Available Commands:
+
+  npm run migrate                       - Run all pending migrations
+  npm run migrate:down                  - Roll back all migrations
+  npm run migrate:rollback -- <version> - Roll back to specific version
+                                          Example: npm run migrate:rollback -- 001
+  npm run migrate:help                  - Show this help message
+`);
+  process.exit(0);
+}
+
 async function migrate(direction = 'up', targetVersion = null) {
+  // Show help if requested
+  if (direction === '--help' || direction === '-h') {
+    showHelp();
+    return;
+  }
+
   let initialConnection;
   let connection;
 
@@ -120,7 +139,13 @@ async function migrate(direction = 'up', targetVersion = null) {
   }
 }
 
-// Get command line arguments
-const direction = process.argv[2];        // 'up', 'down', or 'rollback'
-const targetVersion = process.argv[3];    // specific version for rollback
-migrate(direction, targetVersion); 
+// Update the command line parsing
+const command = process.argv[2];
+if (command === 'help') {
+  showHelp();
+} else {
+  const direction = command === 'down' ? 'down' : 
+                   command === 'rollback' ? 'rollback' : 'up';
+  const targetVersion = process.argv[3];
+  migrate(direction, targetVersion);
+} 

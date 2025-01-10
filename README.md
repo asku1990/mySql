@@ -56,6 +56,12 @@ A simple Node.js tool for managing MySQL database migrations.
 
 ### Run Migrations
 
+- **To see available commands:**
+
+  ```bash
+  npm run migrate:help
+  ```
+
 - **To run all migrations:**
 
   ```bash
