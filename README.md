@@ -8,7 +8,8 @@ A simple Node.js tool for managing MySQL database migrations.
 
 - Easy migration management
 - JavaScript-based scripts
-- Supports rollbacks
+- Supports rollbacks to specific versions
+- Seed data management
 
 ## Prerequisites
 
@@ -55,17 +56,121 @@ A simple Node.js tool for managing MySQL database migrations.
 
 ### Run Migrations
 
+- **To see available commands:**
+
+  ```bash
+  npm run migrate:help
+  ```
+
 - **To run all migrations:**
 
   ```bash
   npm run migrate
   ```
 
-- **To rollback the last migration:**
+- **To rollback all migrations:**
 
   ```bash
   npm run migrate:down
   ```
+
+- **To rollback to a specific version:**
+
+  ```bash
+  npm run migrate:rollback -- 001
+  ```
+  This will keep version 001 and roll back everything after it.
+
+### Migration Examples
+
+1. **Creating a new table:**
+
+   ```javascript
+   // migrations/scripts/001_create_users_table.js
+   module.exports = {
+       up: async (queryInterface) => {
+           await queryInterface.query(`
+               CREATE TABLE users (
+                   id INT PRIMARY KEY AUTO_INCREMENT,
+                   name VARCHAR(255)
+               )
+           `);
+       },
+       down: async (queryInterface) => {
+           await queryInterface.query('DROP TABLE users');
+       }
+   };
+   ```
+
+2. **Adding columns:**
+
+   ```javascript
+   // migrations/scripts/002_add_user_email.js
+   module.exports = {
+       up: async (queryInterface) => {
+           await queryInterface.query(`
+               ALTER TABLE users
+               ADD COLUMN email VARCHAR(255)
+           `);
+       },
+       down: async (queryInterface) => {
+           await queryInterface.query(`
+               ALTER TABLE users
+               DROP COLUMN email
+           `);
+       }
+   };
+   ```
+
+### Understanding Rollbacks
+
+The migration system supports three types of operations:
+
+1. **Full Migration (up)**
+
+   ```bash
+   npm run migrate
+   ```
+   - Runs all pending migrations in order
+   - Updates migrations table to track applied migrations
+
+2. **Full Rollback (down)**
+
+   ```bash
+   npm run migrate:down
+   ```
+   - Rolls back all migrations in reverse order
+   - Removes entries from migrations table
+
+3. **Partial Rollback (to specific version)**
+
+   ```bash
+   npm run migrate:rollback -- 001
+   ```
+   - Keeps the specified version (e.g., 001)
+   - Rolls back all migrations after that version
+   - Useful for reverting to a known good state
+
+### Best Practices
+
+1. **Migration Naming:**
+
+   - Use sequential numbering (001, 002, etc.)
+   - Include descriptive names
+   - Example: `001_create_users_table.js`
+
+2. **Writing Migrations:**
+
+   - Always include both `up` and `down` methods
+   - Make migrations atomic (one focused change)
+   - Test rollbacks in development
+   - Don't modify existing migrations after deployment
+
+3. **Rollback Safety:**
+
+   - Always backup database before rolling back in production
+   - Test rollback procedures in development
+   - Consider data preservation when writing `down` migrations
 
 ### Seed Data Management
 
@@ -82,8 +187,6 @@ A simple Node.js tool for managing MySQL database migrations.
        }
    };
    ```
-
-### Run Seeds
 
 - **To run all seeds:**
 
@@ -118,66 +221,6 @@ A simple Node.js tool for managing MySQL database migrations.
   ```bash
   npm run seed:down 001_add_sample_users.js
   ```
-
-## Understanding Migrations
-
-### Why Migrations?
-
-Migrations are like version control for your database. They help you:
-- Track database changes over time
-- Share database schema changes with team members
-- Maintain consistent database states across different environments
-- Rollback changes if something goes wrong
-
-### Migration Naming Convention
-
-Migrations should follow a sequential naming pattern:
-```
-001_create_users_table.js
-002_add_email_column.js
-003_create_products_table.js
-```
-
-The numeric prefix (001, 002, etc.) is crucial because:
-- It determines the order of execution
-- Helps track which migrations have been run
-- Ensures consistent database state across all environments
-
-### Migration Process Explained
-
-1. **Creating a Migration:**
-   ```javascript
-   // migrations/scripts/001_create_users_table.js
-   module.exports = {
-       up: async (queryInterface) => {
-           // This runs when migrating forward
-           await queryInterface.query(`
-               CREATE TABLE users (
-                   id INT PRIMARY KEY AUTO_INCREMENT,
-                   name VARCHAR(255),
-                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-               )
-           `);
-       },
-       down: async (queryInterface) => {
-           // This runs when rolling back
-           await queryInterface.query('DROP TABLE users');
-       }
-   };
-   ```
-
-2. **Migration States:**
-   - Each migration can be in either an 'up' or 'down' state
-   - The system tracks which migrations have been run in a migrations table
-   - Running `npm run migrate` executes all pending migrations in order
-   - Running `npm run migrate:down` reverts migrations in reverse order
-
-3. **Best Practices:**
-   - Always write both `up` and `down` methods
-   - Keep migrations small and focused
-   - Make migrations reversible when possible
-   - Test migrations in development before production
-   - Never modify an existing migration file after it's been committed
 
 
 

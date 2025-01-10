@@ -7,6 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "migrate": "node migrations/migrate.js up",
     "migrate:down": "node migrations/migrate.js down",
+    "migrate:rollback": "node migrations/migrate.js rollback",
+    "migrate:help": "node migrations/migrate.js help",
     "seed": "node seeds/seed.js up",
     "seed:down": "node seeds/seed.js down"
   },
